@@ -4,6 +4,9 @@ Created on Jan 24, 2017
 @author: hirschag
 '''
 
+def flipBits(string):
+    assert(len(string) == 4)
+    return string[-2:] + string[:-2]
 
 class RHP:
     '''
@@ -16,13 +19,13 @@ class RHP:
         0: RHMP Message
     '''
 
-
     def __init__(self, dstPort, srcPort):
         assert(0 < dstPort < 0x10000) # making sure it is not too long or negative
         assert(0 < srcPort < 0x10000)
         
-        self.dstPort = '%04x'%dstPort # converting straight to hex
-        self.srcPort = '%04x'%srcPort
+        self.dstPort = flipBits('%04x'%(dstPort)) # converting straight to hex
+        self.srcPort = flipBits('%04x'%srcPort)
+        
         
     
     def computeChecksum(self, data):
@@ -46,9 +49,10 @@ class RHP:
         
             
     def validateChecksum(self, data):
+        #data = data[:-4] + flipBits(data[-4:])
         return self.computeChecksum(data) == '0'
         
-    
+        
     def sendRHMP(self, payload):
         try:
             int(payload,16)
@@ -56,12 +60,11 @@ class RHP:
         except ValueError:
             raise
         
-        length = '%04x'%int(len(payload)/2) # 2 hex characters is one byte.
         
-        cwns = '00' + length + self.srcPort + payload
+        cwns = '00' + self.dstPort + self.srcPort + payload
         cwns += '00' if len(cwns)%4 == 2 else ''
                 
-        checksum = self.computeChecksum(cwns)
+        checksum = (self.computeChecksum(cwns))
         
         return cwns + checksum
     
@@ -73,10 +76,12 @@ class RHP:
         
         payload = ''.join([hex(ord(c))[2:] for c in list(payload)])
         
-        cwns = '01' + self.dstPort + self.srcPort + payload
+        length = flipBits('%04x'%int(len(payload)/2)) # 2 hex characters is one byte.
+        
+        cwns = '01' + length + self.srcPort + payload
         cwns += '00' if len(cwns)%4 == 2 else ''
         
-        checksum = self.computeChecksum(cwns)
+        checksum = (self.computeChecksum(cwns))
         
         return cwns + checksum
     
@@ -86,17 +91,17 @@ class RHP:
         decoded = dict()
         decoded['type'] = data[:2]
         
-        if decoded['type'] == '00':
-            decoded['length'] = data[2:6]
+        if decoded['type'] == '01':
+            decoded['length'] = flipBits(data[2:6])
             decoded['dstPort'] = '-1'
-        elif decoded['type'] == '01':
+        elif decoded['type'] == '00':
             decoded['length'] = '-1'
-            decoded['dstPort'] = int(data[2:6],16)
+            decoded['dstPort'] = int(flipBits(data[2:6]),16)
         else:
             return "UnknownType"
         
         
-        decoded['srcPort'] = int(data[6:10],16)
+        decoded['srcPort'] = int(flipBits(data[6:10]),16)
         decoded['checksum'] = data[-4:]
         decoded['payload'] = data[10:-4] if len(data)%4 == 0 else data[10:-6]
         
@@ -121,13 +126,13 @@ class RHMP:
         
     def sendReserved(self):
         head = (0<<10) + self.commID
-        cwns = '%04x'%(head)
+        cwns = ('%04x'%(head))
         cwns += '00'
         return cwns
     
     def sendID_Request(self):
         head = self.commID + (1<<10)
-        cwns = '%04x'%(head)
+        cwns = ('%04x'%(head))
         cwns += '00'
         return cwns
     
@@ -139,19 +144,19 @@ class RHMP:
         assert(ID <= (1<<32)-1)
         
         head = (4<<10) + self.commID
-        cwns = '%04x'%(head) # length is 4 bytes
+        cwns = ('%04x'%(head)) # length is 4 bytes
         cwns += '04' + '%04x'%(ID)
         return cwns
     
     def sendMessage_Request(self):
         head = (8<<10) + self.commID
-        cwns = '%04x'%(head)
+        cwns = ('%04x'%(head))
         cwns += '00'
         return cwns
     
     def sendMessage_Response(self, message):
         head = (16<<10) + self.commID
-        cwns = '%04x'%(head)
+        cwns = ('%04x'%(head))
         
         payload = ''.join([hex(ord(c))[2:] for c in list(message)])
         
@@ -162,7 +167,7 @@ class RHMP:
     
     def decode(self, data):
         decoded = dict()
-        head = int(data[:4],16)
+        head = int((data[:4]),16)
         decoded['type'] = head>>10
         decoded['commID'] = head & 0b1111111111
         decoded['length'] = data[4:6]

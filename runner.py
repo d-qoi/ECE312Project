@@ -18,16 +18,26 @@ RHP message:
     payload:  %s
     checksum: %s
 -----''' % (data['type'], data['srcPort'], data['dstPort'], data['length'], data['payload'], data['checksum']))
+    
+def prettyPrintRHMP(data):
+    print(
+'''-----
+RHMP message
+    type:    %s
+    commID:  %s
+    length:  %s
+    payload: %s
+-----''' % (data['type'], data['commID'], data['length'], data['payload']))
 
 
 if __name__ == '__main__':
     IPAddr = '137.112.38.47'
     PORT = 1874
     
-    HOST = '' #socket.gethostbyname(socket.gethostname())
+    HOST = ''
     
-    srcPort = 313
-    dstPort = 1874
+    srcPort = 1125
+    dstPort = 105
     commID = 312
     
     rhp = RHP(dstPort, srcPort)
@@ -37,16 +47,19 @@ if __name__ == '__main__':
     
     print('starting')
     try:
-        sock.bind((HOST, 18885))
+        sock.bind((HOST, 1125))
         print('socket bound')
     except:
         print('failed')
         raise
     
-    message = rhp.sendCAM('hello')
+    #message = rhp.sendCAM('hello')
+    message = rhp.sendRHMP(rhmp.sendID_Request())
+    
     print('Message before decoding: %s' % message)
     prettyPrintRHP(rhp.decode(message))
-    
+    prettyPrintRHMP(rhmp.decode(rhp.decode(message)['payload']))
+    #message = message[:-4] + '0000'
     toSend = bytes.fromhex(message)
     print(toSend)
     try:
