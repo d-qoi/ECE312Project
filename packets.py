@@ -85,18 +85,21 @@ class RHP:
         
         decoded = dict()
         decoded['type'] = data[:2]
-        decoded['srcPort'] = data[6:10]
-        decoded['checksum'] = data[-4:]
-        decoded['payload'] = data[10:-4] if len(data)%4 == 0 else data[10:-6]
         
         if decoded['type'] == '00':
             decoded['length'] = data[2:6]
-            decoded['dstport'] = None
+            decoded['dstPort'] = '-1'
         elif decoded['type'] == '01':
-            decoded['length'] = None
-            decoded['dstport'] = data[2:6]
+            decoded['length'] = '-1'
+            decoded['dstPort'] = int(data[2:6],16)
         else:
             return "UnknownType"
+        
+        
+        decoded['srcPort'] = int(data[6:10],16)
+        decoded['checksum'] = data[-4:]
+        decoded['payload'] = data[10:-4] if len(data)%4 == 0 else data[10:-6]
+        
         
         return decoded
         
