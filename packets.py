@@ -46,7 +46,7 @@ class RHP:
         
             
     def validateChecksum(self, data):
-        return self.computeChecksum(data) == 0
+        return self.computeChecksum(data) == '0'
         
     
     def sendRHMP(self, payload):
@@ -56,7 +56,7 @@ class RHP:
         except ValueError:
             raise
         
-        length = '%04x'%(len(payload)/2) # 2 hex characters is one byte.
+        length = '%04x'%int(len(payload)/2) # 2 hex characters is one byte.
         
         cwns = '00' + length + self.srcPort + payload
         cwns += '00' if len(cwns)%4 == 2 else ''
@@ -84,6 +84,10 @@ class RHP:
         assert(self.validateChecksum(data))
         
         decoded = dict()
+        decoded['type'] = data[:2]
+        decoded['srcPort'] = data[6:10]
+        decoded['checksum'] = data[-4:]
+        decoded['payload'] = data[10:-4] if len(data)%4 == 0 else data[10:-6]
         
         if decoded['type'] == '00':
             decoded['length'] = data[2:6]
@@ -92,12 +96,9 @@ class RHP:
             decoded['length'] = None
             decoded['dstport'] = data[2:6]
         else:
-            raise Exception("Unknown Type", decoded['type'])
+            return "UnknownType"
         
-        decoded['type'] = data[:2]
-        decoded['srcPort'] = data[6:10]
-        decoded['checksum'] = data[-4:]
-        decoded['payload'] = data[10:-4] if len(data)%4 == 0 else data[10:-6]
+        return decoded
         
 class RHMP:
     '''
@@ -108,7 +109,7 @@ class RHMP:
     
     def __init__(self, commID):
         '''
-        commID is currently passed as an Integer
+        commID is currently passed as an Integersubt
         This may need to change later, or if it is easier
         '''
         assert(commID < 0x400) # 0x400 == 0b0100 0000 0000
@@ -117,13 +118,13 @@ class RHMP:
         
     def sendReserved(self):
         head = (0<<10) + self.commID
-        cwns = '%0x04'%(head)
+        cwns = '%04x'%(head)
         cwns += '00'
         return cwns
     
     def sendID_Request(self):
-        head = (1<<10) + self.commID
-        cwns = '%0x04'%(head)
+        head = self.commID + (1<<10)
+        cwns = '%04x'%(head)
         cwns += '00'
         return cwns
     
@@ -131,27 +132,27 @@ class RHMP:
         '''
         This will take an integer, not a hex value, remember this
         '''
-        assert(isinstance, int)
+        assert(isinstance(ID, int))
         assert(ID <= (1<<32)-1)
         
         head = (4<<10) + self.commID
-        cwns = '%0x04'%(head) # length is 4 bytes
-        cwns += hex(ID)[2:]
+        cwns = '%04x'%(head) # length is 4 bytes
+        cwns += '04' + '%04x'%(ID)
         return cwns
     
     def sendMessage_Request(self):
         head = (8<<10) + self.commID
-        cwns = '%0x04'%(head)
+        cwns = '%04x'%(head)
         cwns += '00'
         return cwns
     
     def sendMessage_Response(self, message):
         head = (16<<10) + self.commID
-        cwns = '%0x04'%(head)
+        cwns = '%04x'%(head)
         
         payload = ''.join([hex(ord(c))[2:] for c in list(message)])
         
-        length = '02x' % len(payload)/2
+        length = '%02x' % int(len(payload)/2)
         assert(len(length) <= 2) # is string length
         
         return cwns + length + payload
@@ -160,11 +161,13 @@ class RHMP:
         decoded = dict()
         head = int(data[:4],16)
         decoded['type'] = head>>10
-        decoded['commID'] = head - (decoded['type']<<10)
+        decoded['commID'] = head & 0b1111111111
+        decoded['length'] = data[4:6]
+        decoded['payload'] = data[6:]
         
-        if decoded['type'] == 0:
-            pass
-        # FINISH ME!
+        return decoded
+            
+    
         
     
         
