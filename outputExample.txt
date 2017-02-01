@@ -1,0 +1,106 @@
+Starting
+Socket Bound
+Sending First Message: 
+-----
+RHP message:
+    type:     01
+    Src port: 1125
+    dst port: None
+    length:   0005
+    payload:  68656c6c6f
+    checksum: 2852
+-----
+Message1 sent
+Message 1 received.
+-----
+RHP message:
+    type:     01
+    Src port: 105
+    dst port: None
+    length:   0011
+    payload:  4d65737361676520726563656976656400
+    checksum: f859
+-----
+Response: 
+Message received
+
+----------------------------------
+
+Sending Second Message:
+-----
+RHP message:
+    type:     00
+    Src port: 1125
+    dst port: 105
+    length:   None
+    payload:  024e00
+    checksum: ad2f
+-----
+-----
+RHMP message
+    type:    2
+    commID:  312
+    length:  00
+    payload: 
+-----
+Message2 sent
+Failed checksum, trying again in a moment.
+Message2 sent
+Message 2 received
+-----
+RHP message:
+    type:     00
+    Src port: 105
+    dst port: 1125
+    length:   None
+    payload:  044e0470043901
+    checksum: 0424
+-----
+-----
+RHMP message
+    type:    4
+    commID:  312
+    length:  04
+    payload: 70043901
+-----
+Identifier: 1879324929
+
+----------------------------------
+
+Sending Third Message:
+-----
+RHP message:
+    type:     00
+    Src port: 1125
+    dst port: 105
+    length:   None
+    payload:  084e00
+    checksum: ad29
+-----
+-----
+RHMP message
+    type:    8
+    commID:  312
+    length:  00
+    payload: 
+-----
+Message3 sent
+Message 3 received
+-----
+RHP message:
+    type:     00
+    Src port: 105
+    dst port: 1125
+    length:   None
+    payload:  104e3a446f6e2774206d616b65206d6520616e6772792e20596f7520776f756c646e2774206c696b65206d65207768656e2049276d20616e6772792e00
+    checksum: c639
+-----
+-----
+RHMP message
+    type:    16
+    commID:  312
+    length:  3a
+    payload: 446f6e2774206d616b65206d6520616e6772792e20596f7520776f756c646e2774206c696b65206d65207768656e2049276d20616e6772792e00
+-----
+Response: 
+Don't make me angry. You wouldn't like me when I'm angry.
