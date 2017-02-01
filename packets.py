@@ -3,6 +3,7 @@ Created on Jan 24, 2017
 
 @author: hirschag
 '''
+from reportlab.lib.pagesizes import B1
 
 def flipBits(string):
     assert(len(string) == 4)
@@ -24,7 +25,7 @@ class RHP:
         assert(0 < srcPort < 0x10000)
         
         self.dstPort = flipBits('%04x'%(dstPort)) # converting straight to hex
-        self.srcPort = flipBits('%04x'%srcPort)
+        self.srcPort = flipBits('%04x'%(srcPort))
         
         
     
@@ -103,7 +104,7 @@ class RHP:
         
         decoded['srcPort'] = int(flipBits(data[6:10]),16)
         decoded['checksum'] = data[-4:]
-        decoded['payload'] = data[10:-4] if len(data)%4 == 0 else data[10:-6]
+        decoded['payload'] = data[10:-4]
         
         
         return decoded
@@ -124,15 +125,31 @@ class RHMP:
         
         self.commID = commID
         
+    def modifyHead(self, head):
+        assert(len(head) == 4)
+        head = int(head,16)
+        b10 = head & 0b11
+        rest = head >> 2
+        head = (b10 << 14) + rest
+        return '%04x'%head
+    
+    def unmodifyHead(self, head):
+        assert(len(head) == 4)
+        head = int(head,16)
+        b10 = head >> 14
+        rest = head << 2
+        head = b10 + rest
+        return '%04x'%head
+        
     def sendReserved(self):
-        head = (0<<10) + self.commID
-        cwns = ('%04x'%(head))
+        head = (1<<10) + self.commID
+        cwns = self.modifyHead('%04x'%(head))
         cwns += '00'
         return cwns
     
     def sendID_Request(self):
-        head = self.commID + (1<<10)
-        cwns = ('%04x'%(head))
+        head = self.commID + (2<<10)
+        cwns = self.modifyHead('%04x'%(head))
         cwns += '00'
         return cwns
     
@@ -144,19 +161,19 @@ class RHMP:
         assert(ID <= (1<<32)-1)
         
         head = (4<<10) + self.commID
-        cwns = ('%04x'%(head)) # length is 4 bytes
+        cwns = self.modifyHead('%04x'%(head)) # length is 4 bytes
         cwns += '04' + '%04x'%(ID)
         return cwns
     
     def sendMessage_Request(self):
         head = (8<<10) + self.commID
-        cwns = ('%04x'%(head))
+        cwns = self.modifyHead('%04x'%(head))
         cwns += '00'
         return cwns
     
     def sendMessage_Response(self, message):
         head = (16<<10) + self.commID
-        cwns = ('%04x'%(head))
+        cwns = self.modifyHead('%04x'%(head))
         
         payload = ''.join([hex(ord(c))[2:] for c in list(message)])
         
@@ -167,7 +184,7 @@ class RHMP:
     
     def decode(self, data):
         decoded = dict()
-        head = int((data[:4]),16)
+        head = int(self.unmodifyHead(data[:4]),16)
         decoded['type'] = head>>10
         decoded['commID'] = head & 0b1111111111
         decoded['length'] = data[4:6]
