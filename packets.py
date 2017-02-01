@@ -94,9 +94,9 @@ class RHP:
         
         if decoded['type'] == '01':
             decoded['length'] = flipBits(data[2:6])
-            decoded['dstPort'] = '-1'
+            decoded['dstPort'] = None
         elif decoded['type'] == '00':
-            decoded['length'] = '-1'
+            decoded['length'] = None
             decoded['dstPort'] = int(flipBits(data[2:6]),16)
         else:
             return "UnknownType"
