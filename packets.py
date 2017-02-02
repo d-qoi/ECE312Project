@@ -3,8 +3,6 @@ Created on Jan 24, 2017
 
 @author: hirschag
 '''
-from reportlab.lib.pagesizes import B1
-
 def flipBits(string):
     assert(len(string) == 4)
     return string[-2:] + string[:-2]
